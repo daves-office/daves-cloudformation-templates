@@ -1,0 +1,42 @@
+Parameters:
+  NetworkAcl:
+    Type: String
+  RouteTable:
+    Type: String
+  VPC:
+    Type: String
+Resources:
+  PublicSubnet:
+    Type: AWS::EC2::Subnet
+    Properties:
+      AvailabilityZoneId : use1-az1
+      CidrBlock: 10.0.0.0/28
+      MapPublicIpOnLaunch: true
+      VpcId: !Ref VPC
+  PublicSubnet2:
+    Type: AWS::EC2::Subnet
+    Properties:
+      AvailabilityZoneId : use1-az2
+      CidrBlock: 10.0.0.16/28
+      MapPublicIpOnLaunch: true
+      VpcId: !Ref VPC
+  NetworkAclAssociation:
+    Type: AWS::EC2::SubnetNetworkAclAssociation
+    Properties:
+      NetworkAclId: !Ref NetworkAcl
+      SubnetId: !Ref PublicSubnet
+  NetworkAclAssociation2:
+    Type: AWS::EC2::SubnetNetworkAclAssociation
+    Properties:
+      NetworkAclId: !Ref NetworkAcl
+      SubnetId: !Ref PublicSubnet2
+  RouteAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref RouteTable
+      SubnetId: !Ref PublicSubnet
+  RouteAssociation2:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref RouteTable
+      SubnetId: !Ref PublicSubnet2
