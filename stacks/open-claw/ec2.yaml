@@ -1,0 +1,21 @@
+Parameters:
+  SubnetId:
+    Type: String
+  SecurityGroupIds:
+    Type: List<String>
+Resources:
+  EC2Instance:
+    Type: AWS::EC2::Instance
+    Properties:
+      InstanceType: t3.large
+      ImageId: ami-0f3caa1cf4417e51b
+      SubnetId: !Ref SubnetId
+      KeyName: Open Claw Key Pair
+      SecurityGroupIds: !Ref SecurityGroupIds
+      UserData:
+        Fn::Base64: !Sub |
+          #!/bin/bash
+          sudo -u ec2-user bash <<'EOF'
+          cd /home/ec2-user
+          curl -fsSL https://openclaw.ai/install.sh | bash -s -- --no-onboard
+          EOF

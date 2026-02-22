@@ -4,9 +4,13 @@ Parameters:
     ConstraintDescription: must be a CIDR block range between x.x.x.x\16 and x.x.x.x\32
     Description: The CIDR block range you want to allow to access the VPC (i.e. home / school I.P. address)
     Type: String
+  AnthropicToken:
+    Type: String
+    NoEcho: true
+    Description: The API token for Anthropic's Claude model
   TemplateURL:
     Type: String
-    Description: The S3 URL of the template.yaml to deploy
+    Description: The S3 URL of the folder the template.yaml is located
 Resources:
   VPC:
     Type: AWS::EC2::VPC
@@ -29,12 +33,20 @@ Resources:
         VPC: !Ref VPC
 
   RouteTableStack:
-    DependsOn: InternetGatewayStack
     Type: AWS::CloudFormation::Stack
     Properties:
       TemplateURL: !Join [ '', [ !Ref TemplateURL, '/routing.yaml' ] ]
       Parameters:
         InternetGateway: !GetAtt InternetGatewayStack.Outputs.InternetGateway
+        VPC: !Ref VPC
+
+  SubnetStack:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Join [ '', [ !Ref TemplateURL, '/subnets.yaml' ] ]
+      Parameters:
+        NetworkAcl: !GetAtt NetworkAclStack.Outputs.NetworkAcl
+        RouteTable: !GetAtt RouteTableStack.Outputs.RouteTable
         VPC: !Ref VPC
 
   SecurityStack:
@@ -45,14 +57,23 @@ Resources:
         AllowedCidrBlock: !Ref AllowedCidrBlock
         VPC: !Ref VPC
 
-  SubnetStack:
-    DependsOn: [InternetGatewayStack, NetworkAclStack, RouteTableStack]
+  SecretStack:
     Type: AWS::CloudFormation::Stack
     Properties:
-      TemplateURL: !Join [ '', [ !Ref TemplateURL, '/subnets.yaml' ] ]
+      TemplateURL: !Join [ '', [ !Ref TemplateURL, '/secrets.yaml' ] ]
       Parameters:
-        NetworkAcl: !GetAtt NetworkAclStack.Outputs.NetworkAcl
-        RouteTable: !GetAtt RouteTableStack.Outputs.RouteTable
-        VPC: !Ref VPC
+        AnthropicToken: !Ref AnthropicToken
+
+  ElasticCloudComputeStack:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Join [ '', [ !Ref TemplateURL, '/ec2.yaml' ] ]
+      Parameters:
+        SubnetId: !GetAtt SubnetStack.Outputs.PublicSubnet
+        SecurityGroupIds: !Join
+          - ","
+          - - !GetAtt SecurityStack.Outputs.HTTPSSecurityGroup
+            - !GetAtt SecurityStack.Outputs.SSHSecurityGroup
+
 
   

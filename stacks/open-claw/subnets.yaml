@@ -40,3 +40,6 @@ Resources:
     Properties:
       RouteTableId: !Ref RouteTable
       SubnetId: !Ref PublicSubnet2
+Outputs:
+  PublicSubnet:
+    Value: !Ref PublicSubnet

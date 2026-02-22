@@ -10,7 +10,7 @@ Resources:
   HTTPSSecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
-      GroupDescription: Allows communication over HTTPS from the instance
+      GroupDescription: Allows communication over HTTPS that originates from within the VPC
       GroupName: HTTPS Security Group
       VpcId: !Ref VPC
   HTTPSEgress:
@@ -19,7 +19,7 @@ Resources:
       IpProtocol: tcp
       FromPort: 443
       ToPort: 443
-      CidrIp: !Ref AllowedCidrBlock
+      CidrIp: 0.0.0.0/0
       GroupId: !Ref HTTPSSecurityGroup
   SSHSecurityGroup:
     Type: AWS::EC2::SecurityGroup
@@ -35,3 +35,8 @@ Resources:
       ToPort: 22
       CidrIp: !Ref AllowedCidrBlock
       GroupId: !Ref SSHSecurityGroup
+Outputs:
+  HTTPSSecurityGroup:
+    Value: !Ref HTTPSSecurityGroup
+  SSHSecurityGroup:
+    Value: !Ref SSHSecurityGroup
