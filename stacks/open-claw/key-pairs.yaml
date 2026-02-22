@@ -1,0 +1,11 @@
+Resources:
+  OpenClawKeyPair:
+    Type: AWS::EC2::KeyPair
+    Properties:
+      KeyName: !Sub
+        - "Open Claw Key Pair - ${UniqueId}"
+        - UniqueId: !Select [ 2, !Split [ '/', !Ref 'AWS::StackId' ] ]
+Outputs:
+  PrivateKeySSMConsoleLink:
+    Description: Link to retrieve the private key from the SSM Parameter Store console
+    Value: !Sub https://${AWS::Region}.console.aws.amazon.com/systems-manager/parameters/ec2/keypair/${OpenClawKeyPair}/detail?region=${AWS::Region}&tab=Table

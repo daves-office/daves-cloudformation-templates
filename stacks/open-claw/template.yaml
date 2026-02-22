@@ -64,6 +64,11 @@ Resources:
       Parameters:
         AnthropicToken: !Ref AnthropicToken
 
+  KeyPairsStack:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Join [ '', [ !Ref TemplateURL, '/key-pairs.yaml' ] ]
+
   ElasticCloudComputeStack:
     Type: AWS::CloudFormation::Stack
     Properties:
@@ -74,6 +79,10 @@ Resources:
           - ","
           - - !GetAtt SecurityStack.Outputs.HTTPSSecurityGroup
             - !GetAtt SecurityStack.Outputs.SSHSecurityGroup
+Outputs:
+  PrivateKeyLink:
+    Description: Link to retrieve the private key from the SSM Parameter Store console
+    Value: !GetAtt KeyPairsStack.Outputs.PrivateKeySSMConsoleLink
 
 
   
