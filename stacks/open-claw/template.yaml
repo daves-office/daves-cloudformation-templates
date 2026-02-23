@@ -16,69 +16,63 @@ Resources:
     Type: AWS::EC2::VPC
     Properties:
       CidrBlock: 10.0.0.0/27
-
   InternetGatewayStack:
     Type: AWS::CloudFormation::Stack
     Properties:
-      TemplateURL: !Join [ '', [ !Ref TemplateURL, '/internet-gateway.yaml' ] ]
+      TemplateURL: !Sub '${TemplateURL}/internet-gateway.yaml'
       Parameters:
         VPC: !Ref VPC
-
   NetworkAclStack:
     Type: AWS::CloudFormation::Stack
     Properties:
-      TemplateURL: !Join [ '', [ !Ref TemplateURL, '/nacl.yaml' ] ]
+      TemplateURL: !Sub '${TemplateURL}/nacl.yaml'
       Parameters:
         AllowedCidrBlock: !Ref AllowedCidrBlock
         VPC: !Ref VPC
-
   RouteTableStack:
     Type: AWS::CloudFormation::Stack
     Properties:
-      TemplateURL: !Join [ '', [ !Ref TemplateURL, '/routing.yaml' ] ]
+      TemplateURL: !Sub '${TemplateURL}/routing.yaml'
       Parameters:
         InternetGateway: !GetAtt InternetGatewayStack.Outputs.InternetGateway
         VPC: !Ref VPC
-
   SubnetStack:
     Type: AWS::CloudFormation::Stack
     Properties:
-      TemplateURL: !Join [ '', [ !Ref TemplateURL, '/subnets.yaml' ] ]
+      TemplateURL: !Sub '${TemplateURL}/subnets.yaml'
       Parameters:
         NetworkAcl: !GetAtt NetworkAclStack.Outputs.NetworkAcl
         RouteTable: !GetAtt RouteTableStack.Outputs.RouteTable
         VPC: !Ref VPC
-
   SecurityStack:
     Type: AWS::CloudFormation::Stack
     Properties:
-      TemplateURL: !Join [ '', [ !Ref TemplateURL, '/security.yaml' ] ]
+      TemplateURL: !Sub '${TemplateURL}/security.yaml'
       Parameters:
         AllowedCidrBlock: !Ref AllowedCidrBlock
         VPC: !Ref VPC
-
   SecretStack:
     Type: AWS::CloudFormation::Stack
     Properties:
-      TemplateURL: !Join [ '', [ !Ref TemplateURL, '/secrets.yaml' ] ]
+      TemplateURL: !Sub '${TemplateURL}/secrets.yaml'
       Parameters:
         AnthropicToken: !Ref AnthropicToken
-
   KeyPairsStack:
     Type: AWS::CloudFormation::Stack
     Properties:
-      TemplateURL: !Join [ '', [ !Ref TemplateURL, '/key-pairs.yaml' ] ]
-
+      TemplateURL: !Sub '${TemplateURL}/key-pairs.yaml'
   ElasticCloudComputeStack:
     Type: AWS::CloudFormation::Stack
     Properties:
-      TemplateURL: !Join [ '', [ !Ref TemplateURL, '/ec2.yaml' ] ]
+      TemplateURL: !Sub '${TemplateURL}/ec2.yaml'
       Parameters:
         SubnetId: !GetAtt SubnetStack.Outputs.PublicSubnet
         SecurityGroupIds: !Join
           - ","
           - - !GetAtt SecurityStack.Outputs.HTTPSSecurityGroup
             - !GetAtt SecurityStack.Outputs.SSHSecurityGroup
+        AnthropicSecretArn: !GetAtt SecretStack.Outputs.AnthropicSecretArn
+        KeyName: !GetAtt KeyPairsStack.Outputs.OpenClawKeyPair
 Outputs:
   PrivateKeyLink:
     Description: Link to retrieve the private key from the SSM Parameter Store console

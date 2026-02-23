@@ -3,19 +3,51 @@ Parameters:
     Type: String
   SecurityGroupIds:
     Type: List<String>
+  AnthropicSecretArn:
+    Type: String
+  KeyName:
+    Type: String
 Resources:
+  EC2Role:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: ec2.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: SecretsManagerReadAccess
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - secretsmanager:GetSecretValue
+                Resource: !Ref AnthropicSecretArn
+  EC2InstanceProfile:
+    Type: AWS::IAM::InstanceProfile
+    Properties:
+      Roles:
+        - !Ref EC2Role
   EC2Instance:
     Type: AWS::EC2::Instance
     Properties:
       InstanceType: t3.large
       ImageId: ami-0f3caa1cf4417e51b
       SubnetId: !Ref SubnetId
-      KeyName: Open Claw Key Pair
+      KeyName: !Ref KeyName
       SecurityGroupIds: !Ref SecurityGroupIds
+      IamInstanceProfile: !Ref EC2InstanceProfile
       UserData:
         Fn::Base64: !Sub |
           #!/bin/bash
+          yum install -y jq
           sudo -u ec2-user bash <<'EOF'
           cd /home/ec2-user
+          JSON=$(aws secretsmanager get-secret-value --secret-id ${AnthropicSecretArn} --region ${AWS::Region} --query SecretString --output text)
+          export ANTHROPIC_API_KEY=$(echo "$JSON" | jq -r '.token')
           curl -fsSL https://openclaw.ai/install.sh | bash -s -- --no-onboard
           EOF
